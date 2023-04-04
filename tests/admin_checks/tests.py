@@ -1009,3 +1009,18 @@ class SystemChecksTestCase(SimpleTestCase):
             self.assertEqual(errors, [])
         finally:
             Book._meta.apps.ready = True
+
+    def test_related_field_list_display(self):
+        class SongAdmin(admin.ModelAdmin):
+            list_display = ["pk", "original_release", "album__title"]
+
+        errors = SongAdmin(Song, AdminSite()).check()
+        self.assertEqual(errors, [])
+
+    def test_related_field_list_display_wrong_field(self):
+        class SongAdmin(admin.ModelAdmin):
+            list_display = ["pk", "original_release", "album__hello"]
+
+        errors = SongAdmin(Song, AdminSite()).check()
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].id, "admin.E108")

@@ -62,6 +62,7 @@ from .models import (
     CustomIdUser,
     Event,
     Genre,
+    GrandChild,
     Group,
     Invitation,
     Membership,
@@ -1612,6 +1613,79 @@ class ChangeListTests(TestCase):
                 self.assertContains(
                     response, f'0 results (<a href="{href}">1 total</a>)'
                 )
+
+    def test_list_display_related_field(self):
+        parent = Parent.objects.create(name="I am your father")
+        child = Child.objects.create(name="I am your child", parent=parent)
+        GrandChild.objects.create(name="I am your grandchild", parent=child)
+        request = self.factory.get("/grandchild/")
+        request.user = self.superuser
+
+        class GrandChildAdmin(admin.ModelAdmin):
+            list_display = ["parent__name", "parent__parent__name"]
+
+        m = GrandChildAdmin(GrandChild, custom_site)
+        response = m.changelist_view(request)
+        self.assertContains(response, parent.name)
+        self.assertContains(response, child.name)
+
+    def test_list_display_related_field_null(self):
+        GrandChild.objects.create(name="I am parentless", parent=None)
+        request = self.factory.get("/grandchild/")
+        request.user = self.superuser
+
+        class GrandChildAdmin(admin.ModelAdmin):
+            list_display = ["name", "parent__name", "parent__parent__name"]
+
+        m = GrandChildAdmin(GrandChild, custom_site)
+        response = m.changelist_view(request)
+        self.assertContains(response, '<td class="field-parent__name">-</td>')
+        self.assertContains(response, '<td class="field-parent__parent__name">-</td>')
+
+    def test_list_display_related_field_ordering_asc(self):
+        parent_a = Parent.objects.create(name="Alice")
+        parent_z = Parent.objects.create(name="Zara")
+        Child.objects.create(name="Alice's child", parent=parent_a)
+        Child.objects.create(name="Zara's child", parent=parent_z)
+        request = self.factory.get("/grandchild/?o=1")
+        request.user = self.superuser
+
+        class ChildAdmin(admin.ModelAdmin):
+            list_display = ["name", "parent__name"]
+            list_per_page = 1
+
+        m = ChildAdmin(Child, custom_site)
+        response = m.changelist_view(request)
+        self.assertContains(response, parent_a.name)
+        self.assertNotContains(response, parent_z.name)
+
+    def test_list_display_related_field_ordering_desc(self):
+        parent_a = Parent.objects.create(name="Alice")
+        parent_z = Parent.objects.create(name="Zara")
+        Child.objects.create(name="Alice's child", parent=parent_a)
+        Child.objects.create(name="Zara's child", parent=parent_z)
+        request = self.factory.get("/grandchild/?o=-1")
+        request.user = self.superuser
+
+        class ChildAdmin(admin.ModelAdmin):
+            list_display = ["name", "parent__name"]
+            list_per_page = 1
+
+        m = ChildAdmin(Child, custom_site)
+        response = m.changelist_view(request)
+        self.assertNotContains(response, parent_a.name)
+        self.assertContains(response, parent_z.name)
+
+    def test_list_display_related_field_ordering_fields(self):
+        class ChildAdmin(admin.ModelAdmin):
+            list_display = ["name", "parent__name"]
+            ordering = ["parent__name"]
+
+        m = ChildAdmin(Child, custom_site)
+        request = self.factory.get("/")
+        request.user = self.superuser
+        cl = m.get_changelist_instance(request)
+        self.assertEqual(cl.get_ordering_field_columns(), {2: "asc"})
 
 
 class GetAdminLogTests(TestCase):
