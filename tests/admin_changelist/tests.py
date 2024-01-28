@@ -2072,8 +2072,6 @@ class SeleniumTests(AdminSeleniumTestCase):
 
     def test_list_display_ordering(self):
         from selenium.webdriver.common.by import By
-        from selenium.webdriver.support.ui import Select
-        from selenium.webdriver.support.ui import WebDriverWait
 
         parent_a = Parent.objects.create(name="Parent A")
         parent_b = Parent.objects.create(name="Parent B")
@@ -2110,3 +2108,5 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertTrue("Grandchild X" in result_list_rows[3].text)
 
         # TODO - the same for parent__name and parent__parent__name
+        # Do I even need to do it for `name`?
+        # Order ascending by parent__name (Child L etc)
