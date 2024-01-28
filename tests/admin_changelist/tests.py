@@ -2107,6 +2107,26 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertTrue("Grandchild Y" in result_list_rows[2].text)
         self.assertTrue("Grandchild X" in result_list_rows[3].text)
 
-        # TODO - the same for parent__name and parent__parent__name
-        # Do I even need to do it for `name`?
-        # Order ascending by parent__name (Child L etc)
+        # Order ascending by parent__name (Child L, Child M, Child N)
+        element = self.selenium.find_element(
+            By.XPATH, "//*[contains(text(), 'Parent  name')]"
+        )
+        element.click()
+        table = self.selenium.find_element(By.ID, "result_list")
+        result_list_rows = table.find_elements(By.TAG_NAME, "tr")
+        self.assertTrue("Grandchild Y" in result_list_rows[1].text)
+        self.assertTrue("Grandchild X" in result_list_rows[2].text)
+        self.assertTrue("Grandchild Z" in result_list_rows[3].text)
+
+        # Order descending by parent__name
+        element = self.selenium.find_element(
+            By.XPATH, "//*[contains(text(), 'Parent  name')]"
+        )
+        element.click()
+        table = self.selenium.find_element(By.ID, "result_list")
+        result_list_rows = table.find_elements(By.TAG_NAME, "tr")
+        self.assertTrue("Grandchild Z" in result_list_rows[1].text)
+        self.assertTrue("Grandchild X" in result_list_rows[2].text)
+        self.assertTrue("Grandchild Y" in result_list_rows[3].text)
+
+        # TODO - the same for parent__parent__name
