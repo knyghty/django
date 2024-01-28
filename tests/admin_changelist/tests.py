@@ -2114,6 +2114,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         element.click()
         table = self.selenium.find_element(By.ID, "result_list")
         result_list_rows = table.find_elements(By.TAG_NAME, "tr")
+        self.assertTrue("Child L" in result_list_rows[1].text)
         self.assertTrue("Grandchild Y" in result_list_rows[1].text)
         self.assertTrue("Grandchild X" in result_list_rows[2].text)
         self.assertTrue("Grandchild Z" in result_list_rows[3].text)
@@ -2125,8 +2126,32 @@ class SeleniumTests(AdminSeleniumTestCase):
         element.click()
         table = self.selenium.find_element(By.ID, "result_list")
         result_list_rows = table.find_elements(By.TAG_NAME, "tr")
+        self.assertTrue("Child N" in result_list_rows[1].text)
         self.assertTrue("Grandchild Z" in result_list_rows[1].text)
         self.assertTrue("Grandchild X" in result_list_rows[2].text)
         self.assertTrue("Grandchild Y" in result_list_rows[3].text)
 
         # TODO - the same for parent__parent__name
+        # Order ascending by parent__parent__name (Parent A, Parent B, Parent C)
+        element = self.selenium.find_element(
+            By.XPATH, "//*[contains(text(), 'Parent  parent  name')]"
+        )
+        element.click()
+        table = self.selenium.find_element(By.ID, "result_list")
+        result_list_rows = table.find_elements(By.TAG_NAME, "tr")
+        self.assertTrue("Parent A" in result_list_rows[1].text)
+        self.assertTrue("Grandchild X" in result_list_rows[1].text)
+        self.assertTrue("Grandchild Y" in result_list_rows[2].text)
+        self.assertTrue("Grandchild Z" in result_list_rows[3].text)
+
+        # Order descending by parent__parent__name
+        element = self.selenium.find_element(
+            By.XPATH, "//*[contains(text(), 'Parent  parent  name')]"
+        )
+        element.click()
+        table = self.selenium.find_element(By.ID, "result_list")
+        result_list_rows = table.find_elements(By.TAG_NAME, "tr")
+        self.assertTrue("Parent C" in result_list_rows[1].text)
+        self.assertTrue("Grandchild Z" in result_list_rows[1].text)
+        self.assertTrue("Grandchild Y" in result_list_rows[2].text)
+        self.assertTrue("Grandchild X" in result_list_rows[3].text)
