@@ -2089,7 +2089,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         )
         element.click()
 
-        # Order ascending on name
+        # Order ascending on `name`.
         element = self.selenium.find_element(By.XPATH, "//*[contains(text(), 'Name')]")
         element.click()
         table = self.selenium.find_element(By.ID, "result_list")
@@ -2098,7 +2098,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertTrue("Grandchild Y" in result_list_rows[2].text)
         self.assertTrue("Grandchild Z" in result_list_rows[3].text)
 
-        # Order descending by name
+        # Order descending by `name`.
         element = self.selenium.find_element(By.XPATH, "//*[contains(text(), 'Name')]")
         element.click()
         table = self.selenium.find_element(By.ID, "result_list")
@@ -2107,7 +2107,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertTrue("Grandchild Y" in result_list_rows[2].text)
         self.assertTrue("Grandchild X" in result_list_rows[3].text)
 
-        # Order ascending by parent__name
+        # Order ascending by `parent__name`.
         element = self.selenium.find_element(
             By.XPATH, "//*[contains(text(), 'Parent  name')]"
         )
@@ -2121,7 +2121,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertTrue("Child N" in result_list_rows[3].text)
         self.assertTrue("Grandchild Z" in result_list_rows[3].text)
 
-        # Order descending by parent__name
+        # Order descending by `parent__name`.
         element = self.selenium.find_element(
             By.XPATH, "//*[contains(text(), 'Parent  name')]"
         )
@@ -2135,7 +2135,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertTrue("Child L" in result_list_rows[3].text)
         self.assertTrue("Grandchild Y" in result_list_rows[3].text)
 
-        # Order ascending by parent__parent__name
+        # Order ascending by `parent__parent__name`.
         element = self.selenium.find_element(
             By.XPATH, "//*[contains(text(), 'Parent  parent  name')]"
         )
@@ -2149,7 +2149,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertTrue("Parent C" in result_list_rows[3].text)
         self.assertTrue("Grandchild Z" in result_list_rows[3].text)
 
-        # Order descending by parent__parent__name
+        # Order descending by `parent__parent__name`.
         element = self.selenium.find_element(
             By.XPATH, "//*[contains(text(), 'Parent  parent  name')]"
         )
