@@ -557,7 +557,7 @@ subclass::
 
     .. versionchanged:: 5.1
 
-        Support for using ``__`` lookups was added.
+        Support for using ``__`` lookups was added, when targeting related fields.
 
     Set ``list_display`` to control which fields are displayed on the change
     list page of the admin.
