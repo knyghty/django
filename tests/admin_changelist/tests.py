@@ -2093,18 +2093,18 @@ class SeleniumTests(AdminSeleniumTestCase):
         element.click()
         table = self.selenium.find_element(By.ID, "result_list")
         result_list_rows = table.find_elements(By.TAG_NAME, "tr")
-        self.assertTrue("Grandchild X" in result_list_rows[1].text)
-        self.assertTrue("Grandchild Y" in result_list_rows[2].text)
-        self.assertTrue("Grandchild Z" in result_list_rows[3].text)
+        self.assertIn("Grandchild X", result_list_rows[1].text)
+        self.assertIn("Grandchild Y", result_list_rows[2].text)
+        self.assertIn("Grandchild Z", result_list_rows[3].text)
 
         # Order descending by `name`.
         element = self.selenium.find_element(By.XPATH, "//*[contains(text(), 'Name')]")
         element.click()
         table = self.selenium.find_element(By.ID, "result_list")
         result_list_rows = table.find_elements(By.TAG_NAME, "tr")
-        self.assertTrue("Grandchild Z" in result_list_rows[1].text)
-        self.assertTrue("Grandchild Y" in result_list_rows[2].text)
-        self.assertTrue("Grandchild X" in result_list_rows[3].text)
+        self.assertIn("Grandchild Z", result_list_rows[1].text)
+        self.assertIn("Grandchild Y", result_list_rows[2].text)
+        self.assertIn("Grandchild X", result_list_rows[3].text)
 
         # Order ascending by `parent__name`.
         element = self.selenium.find_element(
@@ -2113,12 +2113,12 @@ class SeleniumTests(AdminSeleniumTestCase):
         element.click()
         table = self.selenium.find_element(By.ID, "result_list")
         result_list_rows = table.find_elements(By.TAG_NAME, "tr")
-        self.assertTrue("-" in result_list_rows[1].text)
-        self.assertTrue("Grandchild Y" in result_list_rows[1].text)
-        self.assertTrue("Child M" in result_list_rows[2].text)
-        self.assertTrue("Grandchild X" in result_list_rows[2].text)
-        self.assertTrue("Child N" in result_list_rows[3].text)
-        self.assertTrue("Grandchild Z" in result_list_rows[3].text)
+        self.assertIn("-", result_list_rows[1].text)
+        self.assertIn("Grandchild Y", result_list_rows[1].text)
+        self.assertIn("Child M", result_list_rows[2].text)
+        self.assertIn("Grandchild X", result_list_rows[2].text)
+        self.assertIn("Child N", result_list_rows[3].text)
+        self.assertIn("Grandchild Z", result_list_rows[3].text)
 
         # Order descending by `parent__name`.
         element = self.selenium.find_element(
@@ -2127,12 +2127,12 @@ class SeleniumTests(AdminSeleniumTestCase):
         element.click()
         table = self.selenium.find_element(By.ID, "result_list")
         result_list_rows = table.find_elements(By.TAG_NAME, "tr")
-        self.assertTrue("Child N" in result_list_rows[1].text)
-        self.assertTrue("Grandchild Z" in result_list_rows[1].text)
-        self.assertTrue("Child M" in result_list_rows[2].text)
-        self.assertTrue("Grandchild X" in result_list_rows[2].text)
-        self.assertTrue("-" in result_list_rows[3].text)
-        self.assertTrue("Grandchild Y" in result_list_rows[3].text)
+        self.assertIn("Child N", result_list_rows[1].text)
+        self.assertIn("Grandchild Z", result_list_rows[1].text)
+        self.assertIn("Child M", result_list_rows[2].text)
+        self.assertIn("Grandchild X", result_list_rows[2].text)
+        self.assertIn("-", result_list_rows[3].text)
+        self.assertIn("Grandchild Y", result_list_rows[3].text)
 
         # Order ascending by `parent__parent__name`.
         element = self.selenium.find_element(
@@ -2142,11 +2142,11 @@ class SeleniumTests(AdminSeleniumTestCase):
         table = self.selenium.find_element(By.ID, "result_list")
         result_list_rows = table.find_elements(By.TAG_NAME, "tr")
         self.assertIn("-", result_list_rows[1].text)
-        self.assertTrue("Grandchild Y" in result_list_rows[1].text)
-        self.assertTrue("Parent A" in result_list_rows[2].text)
-        self.assertTrue("Grandchild X" in result_list_rows[2].text)
-        self.assertTrue("Parent C" in result_list_rows[3].text)
-        self.assertTrue("Grandchild Z" in result_list_rows[3].text)
+        self.assertIn("Grandchild Y", result_list_rows[1].text)
+        self.assertIn("Parent A", result_list_rows[2].text)
+        self.assertIn("Grandchild X", result_list_rows[2].text)
+        self.assertIn("Parent C", result_list_rows[3].text)
+        self.assertIn("Grandchild Z", result_list_rows[3].text)
 
 
         # Order descending by `parent__parent__name`.
