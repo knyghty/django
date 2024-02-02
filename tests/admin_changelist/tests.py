@@ -2074,9 +2074,8 @@ class SeleniumTests(AdminSeleniumTestCase):
         from selenium.webdriver.common.by import By
 
         parent_a = Parent.objects.create(name="Parent A")
-        parent_b = Parent.objects.create(name="Parent B")
         parent_c = Parent.objects.create(name="Parent C")
-        child_l = Child.objects.create(name="Child L", parent=parent_b)
+        child_l = Child.objects.create(name="Child L", parent=None)
         child_m = Child.objects.create(name="Child M", parent=parent_a)
         child_n = Child.objects.create(name="Child N", parent=parent_c)
         GrandChild.objects.create(name="Grandchild X", parent=child_m)
@@ -2114,7 +2113,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         element.click()
         table = self.selenium.find_element(By.ID, "result_list")
         result_list_rows = table.find_elements(By.TAG_NAME, "tr")
-        self.assertTrue("Child L" in result_list_rows[1].text)
+        self.assertTrue("-" in result_list_rows[1].text)
         self.assertTrue("Grandchild Y" in result_list_rows[1].text)
         self.assertTrue("Child M" in result_list_rows[2].text)
         self.assertTrue("Grandchild X" in result_list_rows[2].text)
@@ -2132,7 +2131,7 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertTrue("Grandchild Z" in result_list_rows[1].text)
         self.assertTrue("Child M" in result_list_rows[2].text)
         self.assertTrue("Grandchild X" in result_list_rows[2].text)
-        self.assertTrue("Child L" in result_list_rows[3].text)
+        self.assertTrue("-" in result_list_rows[3].text)
         self.assertTrue("Grandchild Y" in result_list_rows[3].text)
 
         # Order ascending by `parent__parent__name`.
@@ -2142,12 +2141,13 @@ class SeleniumTests(AdminSeleniumTestCase):
         element.click()
         table = self.selenium.find_element(By.ID, "result_list")
         result_list_rows = table.find_elements(By.TAG_NAME, "tr")
-        self.assertTrue("Parent A" in result_list_rows[1].text)
-        self.assertTrue("Grandchild X" in result_list_rows[1].text)
-        self.assertTrue("Parent B" in result_list_rows[2].text)
-        self.assertTrue("Grandchild Y" in result_list_rows[2].text)
+        self.assertIn("-", result_list_rows[1].text)
+        self.assertTrue("Grandchild Y" in result_list_rows[1].text)
+        self.assertTrue("Parent A" in result_list_rows[2].text)
+        self.assertTrue("Grandchild X" in result_list_rows[2].text)
         self.assertTrue("Parent C" in result_list_rows[3].text)
         self.assertTrue("Grandchild Z" in result_list_rows[3].text)
+
 
         # Order descending by `parent__parent__name`.
         element = self.selenium.find_element(
@@ -2158,7 +2158,8 @@ class SeleniumTests(AdminSeleniumTestCase):
         result_list_rows = table.find_elements(By.TAG_NAME, "tr")
         self.assertIn("Parent C", result_list_rows[1].text)
         self.assertIn("Grandchild Z", result_list_rows[1].text)
-        self.assertIn("Parent B", result_list_rows[2].text)
-        self.assertIn("Grandchild Y", result_list_rows[2].text)
-        self.assertIn("Parent A", result_list_rows[3].text)
-        self.assertIn("Grandchild X", result_list_rows[3].text)
+        self.assertIn("Parent A", result_list_rows[2].text)
+        self.assertIn("Grandchild X", result_list_rows[2].text)
+        self.assertIn("-", result_list_rows[3].text)
+        self.assertIn("Grandchild Y", result_list_rows[3].text)
+
