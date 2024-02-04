@@ -301,6 +301,10 @@ class UtilsTests(SimpleTestCase):
             label_for_field("site__domain", Article, return_attr=True),
             ("Site  domain", Site._meta.get_field("domain")),
         )
+        with self.assertRaisesMessage(
+            AttributeError, "Unable to lookup 'site__unknown' on Article"
+        ):
+            label_for_field("site__unknown", Article)
 
         class MockModelAdmin:
             @admin.display(description="not Really the Model")
