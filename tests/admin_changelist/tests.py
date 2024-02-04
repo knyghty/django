@@ -2148,7 +2148,6 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertIn("Parent C", result_list_rows[3].text)
         self.assertIn("Grandchild Z", result_list_rows[3].text)
 
-
         # Order descending by `parent__parent__name`.
         element = self.selenium.find_element(
             By.XPATH, "//*[contains(text(), 'Parent  parent  name')]"
@@ -2162,4 +2161,3 @@ class SeleniumTests(AdminSeleniumTestCase):
         self.assertIn("Grandchild X", result_list_rows[2].text)
         self.assertIn("-", result_list_rows[3].text)
         self.assertIn("Grandchild Y", result_list_rows[3].text)
-
