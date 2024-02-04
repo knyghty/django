@@ -380,7 +380,7 @@ def label_for_field(name, model, model_admin=None, return_attr=False, form=None)
             else:
                 try:
                     attr = get_fields_from_path(model, name)[-1]
-                except (NotRelationField, FieldDoesNotExist):
+                except (FieldDoesNotExist, NotRelationField):
                     message = "Unable to lookup '%s' on %s" % (
                         name,
                         model._meta.object_name,
