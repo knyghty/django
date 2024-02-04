@@ -294,6 +294,11 @@ class UtilsTests(SimpleTestCase):
 
         self.assertEqual(label_for_field(lambda x: "nothing", Article), "--")
         self.assertEqual(label_for_field("site_id", Article), "Site id")
+        self.assertEqual(label_for_field("site__domain", Article), "Site  domain")
+        self.assertEqual(
+            label_for_field("site__domain", Article, return_attr=True),
+            ("Site  domain", None),
+        )  # TODO: what should be returned?
 
         class MockModelAdmin:
             @admin.display(description="not Really the Model")
