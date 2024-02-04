@@ -295,11 +295,12 @@ class UtilsTests(SimpleTestCase):
 
         self.assertEqual(label_for_field(lambda x: "nothing", Article), "--")
         self.assertEqual(label_for_field("site_id", Article), "Site id")
+        # Check returns correct name and attr when `__` in the field name.
         self.assertEqual(label_for_field("site__domain", Article), "Site  domain")
         self.assertEqual(
             label_for_field("site__domain", Article, return_attr=True),
-            ("Site  domain", None),
-        )  # TODO: what should be returned?
+            ("Site  domain", Site._meta.get_field("domain")),
+        )
 
         class MockModelAdmin:
             @admin.display(description="not Really the Model")
