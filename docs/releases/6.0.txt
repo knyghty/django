@@ -207,7 +207,8 @@ Security
 Serialization
 ~~~~~~~~~~~~~
 
-* ...
+* :class:`~django.core.serializers.json.Serializer` now writes a newline at
+  the end of the output, even when the ``indent`` option is ``True``.
 
 Signals
 ~~~~~~~
