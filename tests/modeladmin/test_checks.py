@@ -349,22 +349,69 @@ class FilterVerticalCheckTests(CheckTestCase):
             "admin.E020",
         )
 
+    def test_reverse_m2m_field(self):
+        class TestModelAdmin(ModelAdmin):
+            fields = ["featured"]
+            filter_vertical = ["featured"]
+
+        self.assertIsValid(TestModelAdmin, Band)
+
     @isolate_apps("modeladmin")
-    def test_invalid_reverse_m2m_field_with_related_name(self):
-        class Contact(Model):
+    def test_reverse_m2m_field_in_inline(self):
+        class Parent(Model):
             pass
 
-        class Customer(Model):
-            contacts = ManyToManyField("Contact", related_name="customers")
+        class Child(Model):
+            parent = ForeignKey(Parent, CASCADE)
+
+        class Note(Model):
+            children = ManyToManyField(Child, related_name="notes")
+
+        class TestInline(TabularInline):
+            model = Child
+            fields = ["notes"]
+            filter_vertical = ["notes"]
+
+        self.assertIsValid(TestInline, Parent)
+
+    @isolate_apps("modeladmin")
+    def test_invalid_symmetrical_self_m2m_field(self):
+        class Node(Model):
+            friends = ManyToManyField("self")
 
         class TestModelAdmin(ModelAdmin):
-            filter_vertical = ["customers"]
+            filter_vertical = ["friends_rel_+"]
 
         self.assertIsInvalid(
             TestModelAdmin,
-            Contact,
+            Node,
             "The value of 'filter_vertical[0]' must be a many-to-many field.",
             "admin.E020",
+        )
+
+    @isolate_apps("modeladmin")
+    def test_invalid_reverse_m2m_field_with_through(self):
+        class Artist(Model):
+            pass
+
+        class Band(Model):
+            members = ManyToManyField(
+                "Artist", through="Membership", related_name="bands"
+            )
+
+        class Membership(Model):
+            artist = ForeignKey(Artist, on_delete=CASCADE)
+            band = ForeignKey(Band, on_delete=CASCADE)
+
+        class TestModelAdmin(ModelAdmin):
+            filter_vertical = ["bands"]
+
+        self.assertIsInvalid(
+            TestModelAdmin,
+            Artist,
+            "The value of 'filter_vertical[0]' cannot include the ManyToManyField "
+            "'bands', because that field manually specifies a relationship model.",
+            "admin.E013",
         )
 
     @isolate_apps("modeladmin")
@@ -429,22 +476,51 @@ class FilterHorizontalCheckTests(CheckTestCase):
             "admin.E020",
         )
 
-    @isolate_apps("modeladmin")
-    def test_invalid_reverse_m2m_field_with_related_name(self):
-        class Contact(Model):
-            pass
+    def test_reverse_m2m_field(self):
+        class TestModelAdmin(ModelAdmin):
+            fields = ["featured"]
+            filter_horizontal = ["featured"]
 
-        class Customer(Model):
-            contacts = ManyToManyField("Contact", related_name="customers")
+        self.assertIsValid(TestModelAdmin, Band)
+
+    @isolate_apps("modeladmin")
+    def test_invalid_symmetrical_self_m2m_field(self):
+        class Node(Model):
+            friends = ManyToManyField("self")
 
         class TestModelAdmin(ModelAdmin):
-            filter_horizontal = ["customers"]
+            filter_horizontal = ["friends_rel_+"]
 
         self.assertIsInvalid(
             TestModelAdmin,
-            Contact,
+            Node,
             "The value of 'filter_horizontal[0]' must be a many-to-many field.",
             "admin.E020",
+        )
+
+    @isolate_apps("modeladmin")
+    def test_invalid_reverse_m2m_field_with_through(self):
+        class Artist(Model):
+            pass
+
+        class Band(Model):
+            members = ManyToManyField(
+                "Artist", through="Membership", related_name="bands"
+            )
+
+        class Membership(Model):
+            artist = ForeignKey(Artist, on_delete=CASCADE)
+            band = ForeignKey(Band, on_delete=CASCADE)
+
+        class TestModelAdmin(ModelAdmin):
+            filter_horizontal = ["bands"]
+
+        self.assertIsInvalid(
+            TestModelAdmin,
+            Artist,
+            "The value of 'filter_horizontal[0]' cannot include the ManyToManyField "
+            "'bands', because that field manually specifies a relationship model.",
+            "admin.E013",
         )
 
     @isolate_apps("modeladmin")

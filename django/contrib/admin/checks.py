@@ -27,6 +27,16 @@ def _issubclass(cls, classinfo):
         return False
 
 
+def _has_manual_m2m_through(field):
+    if isinstance(field, models.ManyToManyRel):
+        through = field.through
+    elif isinstance(field, models.ManyToManyField):
+        through = field.remote_field.through
+    else:
+        return False
+    return not through._meta.auto_created
+
+
 def _contains_subclass(class_path, candidate_paths):
     """
     Return whether or not a dotted class path (or a subclass of that class) is
@@ -465,10 +475,7 @@ class BaseModelAdminChecks:
                 # be an extra field on the form.
                 return []
             else:
-                if (
-                    isinstance(field, models.ManyToManyField)
-                    and not field.remote_field.through._meta.auto_created
-                ):
+                if _has_manual_m2m_through(field):
                     return [
                         checks.Error(
                             "The value of '%s' cannot include the ManyToManyField "
@@ -558,11 +565,13 @@ class BaseModelAdminChecks:
                 field=field_name, option=label, obj=obj, id="admin.E019"
             )
         else:
-            if not field.many_to_many or isinstance(field, models.ManyToManyRel):
+            if not field.many_to_many or (
+                isinstance(field, models.ManyToManyRel) and field.hidden
+            ):
                 return must_be(
                     "a many-to-many field", option=label, obj=obj, id="admin.E020"
                 )
-            elif not field.remote_field.through._meta.auto_created:
+            elif _has_manual_m2m_through(field):
                 return [
                     checks.Error(
                         f"The value of '{label}' cannot include the ManyToManyField "

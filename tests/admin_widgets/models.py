@@ -199,6 +199,11 @@ class Student(models.Model):
         return self.name
 
 
+class ReverseStudent(Student):
+    class Meta:
+        proxy = True
+
+
 class School(models.Model):
     name = models.CharField(max_length=255)
     students = models.ManyToManyField(Student, related_name="current_schools")

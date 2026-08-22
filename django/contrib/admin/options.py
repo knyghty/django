@@ -146,6 +146,13 @@ def get_ul_class(radio_style):
     return "radiolist" if radio_style == VERTICAL else "radiolist inline"
 
 
+def _reverse_many_to_many_field(rel):
+    field = models.ManyToManyField(rel.related_model, through=rel.through, blank=True)
+    field.set_attributes_from_name(rel.name)
+    field.model = rel.model
+    return field
+
+
 class IncorrectLookupParameters(Exception):
     pass
 
@@ -682,6 +689,28 @@ class BaseModelAdmin(metaclass=forms.MediaDefiningClass):
         """
         return request.user.has_module_perms(self.opts.app_label)
 
+    def _get_reverse_many_to_many_attrs(self, request, fields, exclude):
+        names = set(fields or ()) - set(exclude or ()) - set(self.form.declared_fields)
+        attrs = {}
+        accessors = {}
+        for rel in self.model._meta.related_objects:
+            if not (
+                rel.many_to_many
+                and not rel.hidden
+                and rel.field.editable
+                and rel.name in names
+            ):
+                continue
+            formfield = self.formfield_for_dbfield(
+                _reverse_many_to_many_field(rel), request=request
+            )
+            if formfield is not None:
+                attrs[rel.name] = formfield
+                accessors[rel.name] = rel.accessor_name
+        if attrs:
+            attrs["reverse_many_to_many_fields"] = accessors
+        return attrs
+
 
 class ModelAdmin(BaseModelAdmin):
     """Encapsulate all admin options and functionality for a given model."""
@@ -874,7 +903,12 @@ class ModelAdmin(BaseModelAdmin):
         new_attrs = dict.fromkeys(
             f for f in readonly_fields if f in self.form.declared_fields
         )
-        form = type(self.form.__name__, (self.form,), new_attrs)
+        bases = (self.form,)
+        reverse_attrs = self._get_reverse_many_to_many_attrs(request, fields, exclude)
+        if reverse_attrs:
+            new_attrs.update(reverse_attrs)
+            bases = (helpers.ReverseManyToManyModelFormMixin, self.form)
+        form = type(self.form.__name__, bases, new_attrs)
 
         defaults = {
             "form": form,
@@ -2020,7 +2054,7 @@ class ModelAdmin(BaseModelAdmin):
             except FieldDoesNotExist:
                 continue
             # We have to special-case M2Ms as a list of comma-separated PKs.
-            if isinstance(f, models.ManyToManyField):
+            if f.many_to_many:
                 initial[k] = initial[k].split(",")
         return initial
 
@@ -2763,6 +2797,13 @@ class InlineModelAdmin(BaseModelAdmin):
         }
 
         base_model_form = defaults["form"]
+        reverse_attrs = self._get_reverse_many_to_many_attrs(request, fields, exclude)
+        if reverse_attrs:
+            base_model_form = type(
+                base_model_form.__name__,
+                (helpers.ReverseManyToManyModelFormMixin, base_model_form),
+                reverse_attrs,
+            )
         can_change = self.has_change_permission(request, obj) if request else True
         can_add = self.has_add_permission(request, obj) if request else True
         delete_confirmation_max_display = (

@@ -12,6 +12,7 @@ from .models import (
     Member,
     Profile,
     ReleaseEvent,
+    ReverseStudent,
     School,
     Student,
     User,
@@ -48,6 +49,11 @@ class AlbumAdmin(admin.ModelAdmin):
     readonly_fields = ("cover_art",)
 
 
+class ReverseStudentAdmin(admin.ModelAdmin):
+    fields = ["name", "current_schools"]
+    filter_horizontal = ["current_schools"]
+
+
 class SchoolAdmin(admin.ModelAdmin):
     filter_vertical = ("students",)
     filter_horizontal = ("alumni",)
@@ -74,5 +80,6 @@ site.register(Advisor)
 
 site.register(School, SchoolAdmin)
 site.register(Student)
+site.register(ReverseStudent, ReverseStudentAdmin)
 
 site.register(Profile)

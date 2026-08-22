@@ -14,6 +14,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import widgets
 from django.contrib.auth.models import User
+from django.core.exceptions import FieldError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import (
@@ -22,10 +23,11 @@ from django.db.models import (
     DateTimeField,
     ForeignKey,
     ManyToManyField,
+    Model,
     UUIDField,
 )
-from django.test import SimpleTestCase, TestCase, override_settings
-from django.test.utils import requires_tz_support
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
+from django.test.utils import isolate_apps, requires_tz_support
 from django.urls import reverse
 from django.utils import translation
 
@@ -1966,6 +1968,41 @@ class RelatedFieldWidgetPlaywrightTests(AdminWidgetPlaywrightTestCase):
         self.assertEqual(profiles[0].user.username, username_value)
 
 
+class ReverseManyToManyFilterPlaywrightTests(AdminWidgetPlaywrightTestCase):
+    def setUp(self):
+        super().setUp()
+        self.student = Student.objects.create(name="Lisa")
+        self.awesome = School.objects.create(name="Awesome")
+        self.other = School.objects.create(name="Other")
+        self.awesome.students.add(self.student)
+
+    def test_filter_horizontal_edits_reverse_relation(self):
+        self.admin_login(username="super", password="secret", login_url="/")
+        self.page.goto(
+            self.live_server_url
+            + reverse(
+                "admin:admin_widgets_reversestudent_change", args=(self.student.pk,)
+            )
+        )
+        self.assertSelectOptions("#id_current_schools_to", [str(self.awesome.pk)])
+        self.assertSelectOptions("#id_current_schools_from", [str(self.other.pk)])
+
+        self.page.locator("#id_current_schools_from").select_option(
+            value=str(self.other.pk)
+        )
+        self.page.locator("#id_current_schools_add").click()
+        self.assertSelectOptions("#id_current_schools_from", [])
+        self.page.locator("input[name='_save']").click()
+
+        self.expect(self.page.locator("li.success")).to_have_text(
+            "The reverse student “Lisa” was changed successfully."
+        )
+        self.assertSequenceEqual(
+            self.student.current_schools.order_by("name"), [self.awesome, self.other]
+        )
+        self.assertSequenceEqual(self.other.students.all(), [self.student])
+
+
 @skipUnless(Image, "Pillow not installed")
 class ImageFieldWidgetsPlaywrightTests(AdminWidgetPlaywrightTestCase):
     name_input_id = "id_name"
@@ -2036,3 +2073,95 @@ class ImageFieldWidgetsPlaywrightTests(AdminWidgetPlaywrightTestCase):
         )
         # "Clear" persists checked.
         self.expect(self.page.locator(f"#{self.clear_checkbox_id}")).to_be_checked()
+
+
+@override_settings(ROOT_URLCONF="admin_widgets.urls")
+class AdminReverseManyToManyTests(TestDataMixin, TestCase):
+    def setUp(self):
+        self.request = RequestFactory().get("/")
+        self.request.user = self.superuser
+
+    def get_form(self, model=Student, **attrs):
+        admin_class = type("MyModelAdmin", (admin.ModelAdmin,), attrs)
+        return admin_class(model, widget_admin_site).get_form(self.request)
+
+    def formfield(self, **admin_overrides):
+        form = self.get_form(fields=["name", "current_schools"], **admin_overrides)
+        return form.base_fields["current_schools"]
+
+    def test_default_widget(self):
+        ff = self.formfield()
+        self.assertIsInstance(ff, forms.ModelMultipleChoiceField)
+        self.assertEqual(ff.queryset.model, School)
+        self.assertFalse(ff.required)
+
+    def test_filter_widgets(self):
+        for option, is_stacked in [
+            ("filter_horizontal", False),
+            ("filter_vertical", True),
+        ]:
+            with self.subTest(option=option):
+                ff = self.formfield(**{option: ["current_schools"]})
+                widget = ff.widget.widget
+                self.assertIsInstance(widget, widgets.FilteredSelectMultiple)
+                self.assertIs(widget.is_stacked, is_stacked)
+
+    def test_raw_id_field(self):
+        ff = self.formfield(raw_id_fields=["current_schools"])
+        self.assertIsInstance(ff.widget, widgets.ManyToManyRawIdWidget)
+        self.assertEqual(ff.widget.rel.model, School)
+        self.assertEqual(
+            ff.widget.get_context("current_schools", [], {})["related_url"],
+            "/admin_widgets/school/",
+        )
+
+    def test_autocomplete_field(self):
+        ff = self.formfield(autocomplete_fields=["current_schools"])
+        widget = ff.widget.widget
+        self.assertIsInstance(widget, widgets.AutocompleteSelectMultiple)
+        attrs = widget.build_attrs({})
+        self.assertEqual(attrs["data-app-label"], "admin_widgets")
+        self.assertEqual(attrs["data-model-name"], "student")
+        self.assertEqual(attrs["data-field-name"], "current_schools")
+
+    def test_widget_wrapper_points_at_related_model(self):
+        wrapper = self.formfield().widget
+        self.assertIsInstance(wrapper, widgets.RelatedFieldWidgetWrapper)
+        self.assertEqual(wrapper.rel.model, School)
+        self.assertEqual(wrapper.rel.field.model, Student)
+        context = wrapper.get_context("current_schools", [], {})
+        self.assertEqual(context["add_related_url"], "/admin_widgets/school/add/")
+        self.assertIn("_source_model=admin_widgets.student", context["url_params"])
+
+    def test_declared_form_field_is_not_overridden(self):
+        class SchoolForm(forms.ModelForm):
+            current_schools = forms.ModelMultipleChoiceField(
+                queryset=School.objects.none(), label="Custom", required=True
+            )
+
+            class Meta:
+                model = Student
+                fields = ["name", "current_schools"]
+
+        form = self.get_form(form=SchoolForm, fields=["name", "current_schools"])
+        ff = form.base_fields["current_schools"]
+        self.assertEqual(ff.label, "Custom")
+        self.assertTrue(ff.required)
+        self.assertSequenceEqual(ff.queryset, [])
+
+    def test_field_order_follows_fields(self):
+        form = self.get_form(fields=["current_schools", "name"])
+        self.assertEqual(list(form.base_fields), ["current_schools", "name"])
+
+    @isolate_apps("admin_widgets")
+    def test_non_editable_relation_not_added(self):
+        class Ingredient(Model):
+            pass
+
+        class Recipe(Model):
+            ingredients = ManyToManyField(
+                Ingredient, related_name="recipes", editable=False
+            )
+
+        with self.assertRaisesMessage(FieldError, "Unknown field(s) (recipes)"):
+            self.get_form(Ingredient, fields=["recipes"])

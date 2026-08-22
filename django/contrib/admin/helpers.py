@@ -27,6 +27,24 @@ from django.utils.translation import gettext_lazy as _
 ACTION_CHECKBOX_NAME = "_selected_action"
 
 
+class ReverseManyToManyModelFormMixin:
+    reverse_many_to_many_fields = {}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance._is_pk_set():
+            return
+        for name, accessor in self.reverse_many_to_many_fields.items():
+            if name not in self.initial:
+                self.initial[name] = list(getattr(self.instance, accessor).all())
+
+    def _save_m2m(self):
+        super()._save_m2m()
+        for name, accessor in self.reverse_many_to_many_fields.items():
+            if name in self.cleaned_data:
+                getattr(self.instance, accessor).set(self.cleaned_data[name])
+
+
 class ActionForm(forms.Form):
     action = forms.ChoiceField(label=_("Action:"))
     select_across = forms.BooleanField(

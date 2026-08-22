@@ -37,6 +37,10 @@ Minor features
 :mod:`django.contrib.admin`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* :attr:`.ModelAdmin.fields` and :attr:`.ModelAdmin.fieldsets` now support
+  reverse many-to-many relations, which makes a relation editable from the
+  model that doesn't define the ``ManyToManyField``.
+
 * ...
 
 :mod:`django.contrib.admindocs`
